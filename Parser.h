@@ -15,8 +15,9 @@ public:
 
     void InitLexan(char *name_of_file);
 
-    bool Parse();                    // parse
-    const llvm::Module &Generate();  // generate
+    bool Parse();
+
+    void generate();
 
 private:
 
@@ -24,24 +25,25 @@ private:
 
     void next();
 
-    void parse_func();
+    AST::Number *number();
 
-    void parse_main();
+    AST::List *binopr();
+
+    AST::List *quot_list();
+
+    AST::List *command_list();
+
+    AST::List *parse_list();
 
     AST::List *parse_binop(char c);
 
     AST::List *parse_command();
 
-    std::vector<AST::Functions> func;
-    std::vector<AST::List *> main;
-
-
-    llvm::LLVMContext MilaContext;   // llvm context
-    llvm::IRBuilder<> MilaBuilder;   // llvm builder
-    llvm::Module MilaModule;         // llvm module
+    std::vector<AST::List *> lists;
 
     Lexer m_Lexer;                   // lexer is used to read tokens
     Token cur_tok;                      // to keep the current token
+
 
 };
 

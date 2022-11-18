@@ -63,8 +63,8 @@ const struct {
         {"cdr",     tok_cdr},
         {"cons",    tok_cons},
         {"nil",     tok_nil},
-        {"t",       tok_true},
-        {"f",       tok_false}
+        {"true",       tok_true},
+        {"fasle",       tok_false}
 
 };
 
@@ -150,6 +150,9 @@ Token Lexer::readSpe() {
     char symb = cur_symb;
     cur_symb = readSymbol();
     switch (symb) {
+        case '`':
+            return tok_quot;
+
         case ':':
             if (type_of_char() == SPE_SYMB && cur_symb == '=') {
                 cur_symb = readSymbol();

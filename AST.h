@@ -1,101 +1,72 @@
 #ifndef LISP_PARSER_AST_H
 #define LISP_PARSER_AST_H
 
-#include <llvm/ADT/APFloat.h>
-#include <llvm/ADT/STLExtras.h>
-#include <llvm/IR/BasicBlock.h>
-#include <llvm/IR/Constants.h>
-#include <llvm/IR/DerivedTypes.h>
-#include <llvm/IR/Function.h>
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/LegacyPassManager.h>
-#include <llvm/IR/Module.h>
-#include <llvm/IR/Type.h>
-#include <llvm/IR/Verifier.h>
+#include <vector>
+#include <iostream>
 
 namespace AST {
-
-    // create list
-    /*
-    struct List_val{
-        int value;
-        int isList;
-        List_val* First;
-        List_val* Second;
-    */
-    class List_val {
+    class List {
     public:
-        llvm::StructType *ListType = nullptr;
-        llvm::PointerType *ListPtrType = nullptr;
+        List *car;
+        List *cdr;
 
+        virtual ~List() {};
 
-        List_val();
+        virtual List *clone() = 0;
 
-        ~List_val();
+        virtual List *eval() = 0;
 
-        void codegen(llvm::LLVMContext &MilaContext, llvm::IRBuilder<> &MilaBuilder, llvm::Module &MilaModule);
+        virtual void print() = 0;
+    };
+
+    class Number : public List {
+    public:
+        Number *clone() override;
+
+        Number *eval() override;
+
+        void print() override;
+
+        int value;
+    };
+
+    class Var : public List {
+    public:
+        Var *clone() override {};
+
+        Var *eval() override {};
+
+        void print() override {};
+
+        std::string name;
     };
 
 
-    static List_val list;
-
-    class List {
+    class Func : public List {
     public:
-        virtual ~List() = default;
+        Func *clone() override {};
 
-        virtual List *clone() const = 0;
+        List *eval() override {};
 
-        virtual llvm::Value *
-        codegen(llvm::LLVMContext &MilaContext, llvm::IRBuilder<> &MilaBuilder, llvm::Module &MilaModule) = 0;
+        void print() override {};
+
+        std::vector<Var *> args;
+        List *body;
     };
 
     class BinOpr : public List {
     public:
-        BinOpr *clone() const override;
+        BinOpr *clone() override;
 
-        llvm::Value *
-        codegen(llvm::LLVMContext &MilaContext, llvm::IRBuilder<> &MilaBuilder, llvm::Module &MilaModule) override;
+        Number *eval() override;
 
-        char op;
-        List *left, *right;
+        void print() override;
 
+        List *left;
+        List *right;
+        char op, add = ' ';
     };
 
-    class IntNumb : public List {
-    public:
-
-        IntNumb *clone() const override;
-
-        llvm::Value *
-        codegen(llvm::LLVMContext &MilaContext, llvm::IRBuilder<> &MilaBuilder, llvm::Module &MilaModule) override;
-
-        int value;
-    };
-
-
-    //==================================================================================================================
-    //body
-    class Functions {
-
-    };
-
-    class Main {
-
-    };
-
-    class Program {
-    private:
-        std::vector<Functions> func;
-        std::vector<Main> body;
-    public:
-        void setFunc(std::vector<Functions> f);
-
-        void setBody(std::vector<Main> main);
-
-        void codegen(llvm::LLVMContext &MilaContext, llvm::IRBuilder<> &MilaBuilder, llvm::Module &MilaModule);
-
-    };
 }
 
 

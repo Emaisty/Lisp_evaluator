@@ -102,7 +102,8 @@ enum Token {
     tok_nil,
 
     tok_true,
-    tok_false
+    tok_false,
+    tok_quot
 
 };
 

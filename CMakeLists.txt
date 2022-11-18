@@ -1,28 +1,6 @@
-cmake_minimum_required(VERSION 3.4.3)
-project(Lisp_parser)
+cmake_minimum_required(VERSION 3.15)
+project(lisp_eval)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_C_COMPILER clang)
-set(CMAKE_CXX_COMPILER clang++)
 
-# Change this to force specific version of LLVM
-# find_package(LLVM "${MAJOR}.${MINOR}" REQUIRED CONFIG)
-find_package(LLVM REQUIRED CONFIG)
-
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-
-add_executable(Lisp_parser main.cpp Parser.h Parser.cpp AST.h AST.cpp Lexer.h Lexer.cpp)
-
-target_include_directories(Lisp_parser PRIVATE ${LLVM_INCLUDE_DIRS})
-
-separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
-target_compile_options(Lisp_parser PRIVATE ${LLVM_DEFINITIONS_LIST})
-
-# Find the libraries that correspond to the LLVM components
-# that we wish to use
-llvm_map_components_to_libnames(llvm_libs support core irreader)
-
-# Link against LLVM libraries
-target_link_libraries(Lisp_parser ${llvm_libs})
+add_executable(lisp_eval main.cpp Parser.h Parser.cpp AST.h AST.cpp Lexer.h Lexer.cpp)
