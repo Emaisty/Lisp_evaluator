@@ -25,6 +25,10 @@ private:
 
     void next();
 
+    AST::Func* function();
+
+    AST::IfCond* if_statement();
+
     AST::Number *number();
 
     AST::List *binopr();

@@ -30,6 +30,31 @@ namespace AST {
         int value;
     };
 
+    class BinOpr : public List {
+    public:
+        BinOpr *clone() override;
+
+        Number *eval() override;
+
+        void print() override;
+
+        List *left;
+        List *right;
+        char op, add = ' ';
+    };
+
+    class IfCond : public List {
+    public:
+        IfCond *clone() override;
+
+        List *eval() override;
+
+        void print() override;
+
+        List *cond;
+        List *tr, *fl;
+    };
+
     class Var : public List {
     public:
         Var *clone() override {};
@@ -54,18 +79,6 @@ namespace AST {
         List *body;
     };
 
-    class BinOpr : public List {
-    public:
-        BinOpr *clone() override;
-
-        Number *eval() override;
-
-        void print() override;
-
-        List *left;
-        List *right;
-        char op, add = ' ';
-    };
 
 }
 

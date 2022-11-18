@@ -19,6 +19,19 @@ void Parser::InitLexan(char *name_of_file) {
     m_Lexer.InitInput(name_of_file);
 }
 
+AST::Func *Parser::function() {
+
+}
+
+AST::IfCond *Parser::if_statement() {
+    next();
+    AST::IfCond stat;
+    stat.cond = parse_list();
+    stat.tr = parse_list();
+    stat.fl = parse_list();
+    return stat.clone();
+}
+
 AST::List *Parser::binopr() {
     AST::BinOpr res;
     switch (cur_tok) {
@@ -90,6 +103,9 @@ AST::List *Parser::quot_list() {
 
 AST::List *Parser::command_list() {
     switch (cur_tok) {
+        case tok_if:
+            return if_statement();
+            break;
         case tok_function:
             break;
         case tok_plus:
@@ -144,7 +160,7 @@ bool Parser::Parse() {
 }
 
 void Parser::generate() {
-    for (auto & list : lists) {
+    for (auto &list: lists) {
         list->eval()->print();
         std::cout << std::endl;
     }

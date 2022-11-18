@@ -77,3 +77,30 @@ void AST::BinOpr::print() {
     left->print();
     right->print();
 }
+
+
+AST::IfCond *AST::IfCond::clone() {
+    return new AST::IfCond(*this);
+}
+
+AST::List *AST::IfCond::eval() {
+    Number *condition;
+    condition = dynamic_cast<Number *>(cond->eval());
+    if (!condition)
+        throw "expected Number in condition";
+
+    if (condition->value != 0) {
+        return tr->eval();
+    } else {
+        return fl->eval();
+    }
+}
+
+void AST::IfCond::print() {
+    std::cout << "(if ";
+    cond->print();
+    std::cout << " then ";
+    tr->print();
+    std::cout << " else ";
+    fl->print();
+}
