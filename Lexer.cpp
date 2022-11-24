@@ -15,7 +15,7 @@ InputCharType Lexer::type_of_char() {
     else if (cur_symb == EOF || cur_symb == 0)
         return END;
     else if ((cur_symb >= ':' && cur_symb <= '?') || (cur_symb >= '\'' && cur_symb <= '.') || cur_symb == '$' ||
-             cur_symb == '&' || (cur_symb >= '[' && cur_symb <= '_'))
+             cur_symb == '&' || (cur_symb >= '[' && cur_symb <= '_') || cur_symb == '`')
         return SPE_SYMB;
     else if (cur_symb <= ' ')
         return WHITE_SPACE;
@@ -55,6 +55,7 @@ const struct {
         {"dec",     tok_dec},
         //{"procedure", tok_procedure},
         //{"function",  tok_function},
+        {"define",  tok_function},
         {"and",     tok_and},
         {"or",      tok_or},
         {"exit",    tok_exit},
@@ -63,8 +64,8 @@ const struct {
         {"cdr",     tok_cdr},
         {"cons",    tok_cons},
         {"nil",     tok_nil},
-        {"true",       tok_true},
-        {"fasle",       tok_false}
+        {"true",    tok_true},
+        {"fasle",   tok_false}
 
 };
 
@@ -152,6 +153,8 @@ Token Lexer::readSpe() {
     switch (symb) {
         case '`':
             return tok_quot;
+        case ',':
+            return tok_unquot;
 
         case ':':
             if (type_of_char() == SPE_SYMB && cur_symb == '=') {
@@ -172,8 +175,8 @@ Token Lexer::readSpe() {
             return tok_div;
         case '.':
             return tok_dot;
-        case ',':
-            return tok_comma;
+//        case ',':
+//            return tok_comma;
         case '[':
             return tok_opsqbrak;
         case ']':

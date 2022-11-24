@@ -3,12 +3,16 @@
 
 #include <vector>
 #include <iostream>
+#include <map>
+
 
 namespace AST {
     class List {
     public:
         List *car;
         List *cdr;
+
+        bool quoted;
 
         virtual ~List() {};
 
@@ -17,13 +21,14 @@ namespace AST {
         virtual List *eval() = 0;
 
         virtual void print() = 0;
+
     };
 
     class Number : public List {
     public:
         Number *clone() override;
 
-        Number *eval() override;
+        List *eval() override;
 
         void print() override;
 
@@ -34,7 +39,7 @@ namespace AST {
     public:
         BinOpr *clone() override;
 
-        Number *eval() override;
+        List *eval() override;
 
         void print() override;
 
@@ -55,13 +60,25 @@ namespace AST {
         List *tr, *fl;
     };
 
+    class ObjList : public List {
+    public:
+        ObjList *clone() override;
+
+        List *eval() override;
+
+        void print() override;
+
+        std::vector<List *> elemList;
+
+    };
+
     class Var : public List {
     public:
-        Var *clone() override {};
+        Var *clone() override;
 
-        Var *eval() override {};
+        List *eval() override;
 
-        void print() override {};
+        void print() override;
 
         std::string name;
     };
@@ -69,18 +86,23 @@ namespace AST {
 
     class Func : public List {
     public:
-        Func *clone() override {};
+        Func *clone() override;
 
-        List *eval() override {};
+        List *eval() override;
 
-        void print() override {};
+        void print() override;
 
-        std::vector<Var *> args;
+        std::string name;
+
+        std::vector<std::string> args;
         List *body;
     };
 
-
 }
+
+static std::map<std::string, AST::List *> globalDefines;
+
+static std::map<std::string, AST::List *> localVars;
 
 
 #endif //LISP_PARSER_AST_H

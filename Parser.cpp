@@ -6,7 +6,7 @@ Parser::Parser() {
 
 void Parser::match(Token tok) {
     if (cur_tok != tok) {
-        std::cout << "ERROR. Expected: " << tok << " but get " << cur_tok << std::endl;
+        throw std::invalid_argument("Error. Unexpected token");
     }
 }
 
@@ -20,16 +20,32 @@ void Parser::InitLexan(char *name_of_file) {
 }
 
 AST::Func *Parser::function() {
-
+    AST::Func res;
+    next();
+    match(tok_opbrak);
+    next();
+    match(tok_identifier);
+    res.name = m_Lexer.identifierStr();
+    next();
+    while (cur_tok != tok_clbrak) {
+        match(tok_identifier);
+        res.args.push_back(m_Lexer.identifierStr());
+        next();
+    }
+    match(tok_clbrak);
+    next();
+    res.body = parse_list();
+    return res.clone();
 }
 
 AST::IfCond *Parser::if_statement() {
     next();
-    AST::IfCond stat;
-    stat.cond = parse_list();
-    stat.tr = parse_list();
-    stat.fl = parse_list();
-    return stat.clone();
+    AST::IfCond res;
+    res.cond = parse_list();
+    res.tr = parse_list();
+    res.fl = parse_list();
+    res.quoted = if_quot;
+    return res.clone();
 }
 
 AST::List *Parser::binopr() {
@@ -75,6 +91,7 @@ AST::List *Parser::binopr() {
     next();
     res.left = parse_list();
     res.right = parse_list();
+    res.quoted = if_quot;
     return res.clone();
 }
 
@@ -94,20 +111,33 @@ AST::Number *Parser::number() {
             throw "Expect number";
     }
     next();
+    res.quoted = if_quot;
     return res.clone();
 }
 
-AST::List *Parser::quot_list() {
-
+AST::Var *Parser::var() {
+    AST::Var res;
+    res.name = m_Lexer.identifierStr();
+    res.quoted = if_quot;
+    next();
+    return res.clone();
 }
 
-AST::List *Parser::command_list() {
+AST::List *Parser::list() {
+    AST::ObjList res;
+    while (cur_tok != tok_clbrak) {
+        res.elemList.push_back(parse_list());
+    }
+    res.quoted = if_quot;
+    return res.clone();
+}
+
+AST::List *Parser::command() {
     switch (cur_tok) {
         case tok_if:
             return if_statement();
-            break;
         case tok_function:
-            break;
+            return function();
         case tok_plus:
         case tok_minus:
         case tok_mul:
@@ -120,20 +150,34 @@ AST::List *Parser::command_list() {
         case tok_less:
             return binopr();
         default:
-            throw "Unknown command";
+            return list();
     }
 }
 
+
 AST::List *Parser::parse_list() {
     AST::List *res = nullptr;
+    bool pr_state;
     switch (cur_tok) {
+        case tok_unquot:
+            if (!if_quot)
+                throw std::invalid_argument("try to unquoting not quoted");
+            pr_state = if_quot;
+            if_quot = false;
+            res = parse_list();
+            if_quot = pr_state;
+            break;
         case tok_quot:
             next();
-            match(tok_opbrak);
-            next();
-            res = quot_list();
-            match(tok_clbrak);
-            next();
+            pr_state = if_quot;
+            if_quot = true;
+            res = parse_list();
+            if_quot = pr_state;
+            break;
+        case tok_identifier:
+            res = var();
+        case tok_string:
+
             break;
         case tok_number_int:
         case tok_true:
@@ -143,7 +187,7 @@ AST::List *Parser::parse_list() {
         default:
             match(tok_opbrak);
             next();
-            res = command_list();
+            res = command();
             match(tok_clbrak);
             next();
             break;
@@ -154,6 +198,7 @@ AST::List *Parser::parse_list() {
 bool Parser::Parse() {
     next();
     while (cur_tok != tok_eof) {
+        if_quot = false;
         lists.push_back(parse_list());
     }
     return true;

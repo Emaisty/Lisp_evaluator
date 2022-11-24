@@ -25,25 +25,25 @@ private:
 
     void next();
 
-    AST::Func* function();
+    AST::Func *function();
 
-    AST::IfCond* if_statement();
+    AST::IfCond *if_statement();
 
     AST::Number *number();
 
+    AST::Var* var();
+
     AST::List *binopr();
 
-    AST::List *quot_list();
+    AST::List *command();
 
-    AST::List *command_list();
+    AST::List *list();
 
     AST::List *parse_list();
 
-    AST::List *parse_binop(char c);
-
-    AST::List *parse_command();
-
     std::vector<AST::List *> lists;
+
+    bool if_quot = false;
 
     Lexer m_Lexer;                   // lexer is used to read tokens
     Token cur_tok;                      // to keep the current token

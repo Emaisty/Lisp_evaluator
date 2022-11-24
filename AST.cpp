@@ -5,24 +5,34 @@ AST::Number *AST::Number::clone() {
     return new AST::Number(*this);
 }
 
-AST::Number *AST::Number::eval() {
+AST::List *AST::Number::eval() {
     return this->clone();
 }
 
 void AST::Number::print() {
-    std::cout << value;
+    std::cout << value << ' ';
 }
 
 AST::BinOpr *AST::BinOpr::clone() {
     return new AST::BinOpr(*this);
 }
 
-AST::Number *AST::BinOpr::eval() {
+AST::List *AST::BinOpr::eval() {
+    if (quoted) {
+        AST::ObjList res;
+        AST::Var str;
+        str.quoted = true;
+        str.name = op + add;
+        res.elemList.push_back(str.clone());
+        res.elemList.push_back(left->clone());
+        res.elemList.push_back(right->clone());
+        return res.clone();
+    }
     Number *l, *r, res;
     l = dynamic_cast<Number *>(left->eval());
     r = dynamic_cast<Number *>(right->eval());
     if (!l || !r)
-        throw "BinOpr Error. Expected number";
+        throw std::invalid_argument("BinOpr Error. Expected number");
     switch (op) {
         case '+':
             res.value = l->value + r->value;
@@ -73,23 +83,29 @@ AST::Number *AST::BinOpr::eval() {
 }
 
 void AST::BinOpr::print() {
-    std::cout << op << add;
-    left->print();
-    right->print();
+    throw std::invalid_argument("Cannot print not quoted bin oper");
 }
-
 
 AST::IfCond *AST::IfCond::clone() {
     return new AST::IfCond(*this);
 }
 
 AST::List *AST::IfCond::eval() {
+    if (quoted) {
+        AST::ObjList res;
+        AST::Var str;
+        str.quoted = true;
+        str.name = "if";
+        res.elemList.push_back(str.clone());
+        res.elemList.push_back(cond->clone());
+        res.elemList.push_back(tr->clone());
+        res.elemList.push_back(fl->clone());
+        return res.clone();
+    }
     Number *condition;
     condition = dynamic_cast<Number *>(cond->eval());
-    if (!condition)
-        throw "expected Number in condition";
 
-    if (condition->value != 0) {
+    if (!condition || condition->value != 0) {
         return tr->eval();
     } else {
         return fl->eval();
@@ -97,10 +113,73 @@ AST::List *AST::IfCond::eval() {
 }
 
 void AST::IfCond::print() {
-    std::cout << "(if ";
-    cond->print();
-    std::cout << " then ";
-    tr->print();
-    std::cout << " else ";
-    fl->print();
+    throw std::invalid_argument("Cannot print not quoted if statement");
+}
+
+
+AST::ObjList *AST::ObjList::clone() {
+    return new AST::ObjList(*this);
+}
+
+AST::List *AST::ObjList::eval() {
+    if (quoted)
+        return this->clone();
+    if (elemList.empty())
+        throw std::invalid_argument("missing procedure expression");
+    Func *command = dynamic_cast<Func *>(elemList[0]->eval());
+    if (!command)
+        throw std::invalid_argument("expected a procedure that can be applied to arguments");
+    if (command->args.size() != elemList.size() - 1)
+        throw std::invalid_argument("the expected number of arguments does not match the given number");
+    for (int i = 0; i < command->args.size(); ++i) {
+        localVars[command->args[i]] = elemList[i + 1];
+    }
+    List *res = command->body->eval();
+    localVars.clear();
+    return res;
+}
+
+void AST::ObjList::print() {
+    std::cout << "( ";
+    for (auto &i: elemList) {
+        i->print();
+    }
+    std::cout << ") ";
+}
+
+
+AST::Var *AST::Var::clone() {
+    return new AST::Var(*this);
+}
+
+AST::List *AST::Var::eval() {
+    if (quoted)
+        return this->clone();
+    if (localVars.find(name) != localVars.end())
+        return localVars[name]->eval();
+    if (globalDefines.find(name) != globalDefines.end())
+        return globalDefines[name]->eval();
+    throw std::invalid_argument("Unknown reference " + name);
+}
+
+void AST::Var::print() {
+    std::cout << name << ' ';
+}
+
+AST::Func *AST::Func::clone() {
+    return new AST::Func(*this);
+}
+
+AST::List *AST::Func::eval() {
+    if (quoted) {
+        AST::Var res;
+        res.name = "#<procedure:" + this->name + ">";
+        return res.clone();
+    }
+    globalDefines[name] = this;
+    return this;
+}
+
+void AST::Func::print() {
+
 }

@@ -103,7 +103,8 @@ enum Token {
 
     tok_true,
     tok_false,
-    tok_quot
+    tok_quot,
+    tok_unquot
 
 };
 

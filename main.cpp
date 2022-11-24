@@ -1,4 +1,6 @@
 #include "Parser.h"
+#include <emmintrin.h>
+#include <immintrin.h>
 
 // Use tutorials in: https://llvm.org/docs/tutorial/
 
