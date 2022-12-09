@@ -9,10 +9,8 @@
 namespace AST {
     class List {
     public:
-        List *car;
-        List *cdr;
 
-        bool quoted;
+        bool quoted = false;
 
         virtual ~List() {};
 
@@ -55,9 +53,22 @@ namespace AST {
         List *eval() override;
 
         void print() override;
+    };
 
-        List *cond;
-        List *tr, *fl;
+    class Car : public List {
+        Car *clone() override;
+
+        List *eval() override;
+
+        void print() override;
+    };
+
+    class Cdr : public List {
+        Cdr *clone() override;
+
+        List *eval() override;
+
+        void print() override;
     };
 
     class ObjList : public List {
@@ -100,9 +111,9 @@ namespace AST {
 
 }
 
-static std::map<std::string, AST::List *> globalDefines;
+extern std::map<std::string, AST::List *> globalDefines;
 
-static std::map<std::string, AST::List *> localVars;
+extern std::map<std::string, AST::List *> localVars;
 
 
 #endif //LISP_PARSER_AST_H

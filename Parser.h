@@ -21,6 +21,8 @@ public:
 
 private:
 
+    void quot_unquot();
+
     void match(Token tok);
 
     void next();

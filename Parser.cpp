@@ -4,6 +4,26 @@ Parser::Parser() {
 }
 
 
+void Parser::quot_unquot() {
+//    switch (cur_tok) {
+//        case tok_unquot:
+//            if (!if_quot)
+//                throw std::invalid_argument("try to unquoting not quoted");
+//            pr_state = if_quot;
+//            if_quot = false;
+//            res = parse_list();
+//            if_quot = pr_state;
+//            break;
+//        case tok_quot:
+//            next();
+//            pr_state = if_quot;
+//            if_quot = true;
+//            res = parse_list();
+//            if_quot = pr_state;
+//            break;
+//    }
+}
+
 void Parser::match(Token tok) {
     if (cur_tok != tok) {
         throw std::invalid_argument("Error. Unexpected token");
@@ -41,10 +61,10 @@ AST::Func *Parser::function() {
 AST::IfCond *Parser::if_statement() {
     next();
     AST::IfCond res;
-    res.cond = parse_list();
-    res.tr = parse_list();
-    res.fl = parse_list();
-    res.quoted = if_quot;
+//    res.cond = parse_list();
+//    res.tr = parse_list();
+//    res.fl = parse_list();
+//    res.quoted = if_quot;
     return res.clone();
 }
 
@@ -124,15 +144,20 @@ AST::Var *Parser::var() {
 }
 
 AST::List *Parser::list() {
+    match(tok_opbrak);
+    next();
     AST::ObjList res;
     while (cur_tok != tok_clbrak) {
         res.elemList.push_back(parse_list());
     }
     res.quoted = if_quot;
+    match(tok_clbrak);
+    next();
     return res.clone();
 }
 
 AST::List *Parser::command() {
+    bool pr_state;
     switch (cur_tok) {
         case tok_if:
             return if_statement();
@@ -157,27 +182,27 @@ AST::List *Parser::command() {
 
 AST::List *Parser::parse_list() {
     AST::List *res = nullptr;
-    bool pr_state;
+    bool pr_quot;
     switch (cur_tok) {
+        case tok_quot:
+            pr_quot = if_quot;
+            if_quot = true;
+            next();
+            res = parse_list();
+            if_quot = pr_quot;
+            break;
         case tok_unquot:
             if (!if_quot)
-                throw std::invalid_argument("try to unquoting not quoted");
-            pr_state = if_quot;
+                throw std::invalid_argument("cannot unqout not quoted");
+            pr_quot = if_quot;
             if_quot = false;
-            res = parse_list();
-            if_quot = pr_state;
-            break;
-        case tok_quot:
             next();
-            pr_state = if_quot;
-            if_quot = true;
             res = parse_list();
-            if_quot = pr_state;
+            if_quot = pr_quot;
             break;
         case tok_identifier:
             res = var();
         case tok_string:
-
             break;
         case tok_number_int:
         case tok_true:
@@ -185,11 +210,7 @@ AST::List *Parser::parse_list() {
             res = number();
             break;
         default:
-            match(tok_opbrak);
-            next();
             res = command();
-            match(tok_clbrak);
-            next();
             break;
     }
     return res;
@@ -205,6 +226,28 @@ bool Parser::Parse() {
 }
 
 void Parser::generate() {
+    {
+        AST::Func if_cond;
+        AST::IfCond body;
+        if_cond.body = &body;
+        if_cond.args = std::vector<std::string>{"a", "b", "c"};
+        globalDefines["if"] = if_cond.clone();
+    }
+    {
+        AST::Func car;
+        AST::Car body;
+        car.body = &body;
+        car.args = std::vector<std::string>{"a"};
+        globalDefines["car"] = car.clone();
+    }
+    {
+        AST::Func cdr;
+        AST::Cdr body;
+        cdr.body = &body;
+        cdr.args = std::vector<std::string>{"a"};
+        globalDefines["cdr"] = cdr.clone();
+    }
+
     for (auto &list: lists) {
         list->eval()->print();
         std::cout << std::endl;

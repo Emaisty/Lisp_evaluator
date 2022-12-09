@@ -41,7 +41,7 @@ const struct {
         {"readln",  tok_readln},
         {"write",   tok_write},
         {"writeln", tok_writeln},
-        {"if",      tok_if},
+//        {"if",      tok_if},
         {"then",    tok_then},
         {"else",    tok_else},
         {"while",   tok_while},
@@ -60,8 +60,8 @@ const struct {
         {"or",      tok_or},
         {"exit",    tok_exit},
 
-        {"car",     tok_car},
-        {"cdr",     tok_cdr},
+//        {"car",     tok_car},
+//        {"cdr",     tok_cdr},
         {"cons",    tok_cons},
         {"nil",     tok_nil},
         {"true",    tok_true},
@@ -76,13 +76,16 @@ Token Lexer::readString() {
         str += (char) cur_symb;
         cur_symb = readSymbol();
     }
+    m_IdentifierStr = str;
+    if (quoted)
+        return tok_identifier;
 
     for (auto &i: keyWordTable) {
         if (i.slovo == str)
             return i.symb;
     }
 
-    m_IdentifierStr = str;
+
     return tok_identifier;
 
 }

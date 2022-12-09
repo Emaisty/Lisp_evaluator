@@ -1,5 +1,9 @@
 #include "AST.h"
 
+std::map<std::string, AST::List *> globalDefines;
+
+std::map<std::string, AST::List *> localVars;
+
 
 AST::Number *AST::Number::clone() {
     return new AST::Number(*this);
@@ -22,7 +26,8 @@ AST::List *AST::BinOpr::eval() {
         AST::ObjList res;
         AST::Var str;
         str.quoted = true;
-        str.name = op + add;
+        str.name = op;
+        str.name += add;
         res.elemList.push_back(str.clone());
         res.elemList.push_back(left->clone());
         res.elemList.push_back(right->clone());
@@ -97,23 +102,86 @@ AST::List *AST::IfCond::eval() {
         str.quoted = true;
         str.name = "if";
         res.elemList.push_back(str.clone());
-        res.elemList.push_back(cond->clone());
-        res.elemList.push_back(tr->clone());
-        res.elemList.push_back(fl->clone());
+        res.elemList.push_back(localVars["a"]->eval());
+        res.elemList.push_back(localVars["b"]->eval());
+        res.elemList.push_back(localVars["c"]->eval());
         return res.clone();
     }
     Number *condition;
-    condition = dynamic_cast<Number *>(cond->eval());
+    condition = dynamic_cast<Number *>(localVars["a"]->eval());
 
     if (!condition || condition->value != 0) {
-        return tr->eval();
+        return localVars["b"]->eval();
     } else {
-        return fl->eval();
+        return localVars["c"]->eval();
     }
 }
 
 void AST::IfCond::print() {
     throw std::invalid_argument("Cannot print not quoted if statement");
+}
+
+AST::Car *AST::Car::clone() {
+    return new AST::Car(*this);
+}
+
+AST::List *AST::Car::eval() {
+    if (quoted) {
+        AST::ObjList res;
+        AST::Var str;
+        str.quoted = true;
+        str.name = "car";
+        res.elemList.push_back(str.clone());
+        res.elemList.push_back(localVars["a"]->eval());
+        return res.clone();
+    }
+    ObjList *lst;
+    lst = dynamic_cast<ObjList *>(localVars["a"]->eval());
+    if (!lst)
+        throw std::invalid_argument("cannot take car from not list object");
+    if (lst->elemList.empty())
+        throw std::invalid_argument("cannot take car null list");
+    return lst->elemList[0];
+}
+
+void AST::Car::print() {
+    throw std::invalid_argument("Cannot print not quoted car statement");
+}
+
+AST::Cdr *AST::Cdr::clone() {
+    return new AST::Cdr(*this);
+}
+
+AST::List *AST::Cdr::eval() {
+    if (quoted) {
+        AST::ObjList res;
+        AST::Var str;
+        str.quoted = true;
+        str.name = "cdr";
+        res.elemList.push_back(str.clone());
+        res.elemList.push_back(localVars["a"]->eval());
+        return res.clone();
+    }
+    ObjList *lst;
+    lst = dynamic_cast<ObjList *>(localVars["a"]->eval());
+    if (!lst)
+        throw std::invalid_argument("cannot take cdr from not list object");
+    if (lst->elemList.empty())
+        throw std::invalid_argument("cannot take cdr null list");
+    if (lst->elemList.size() == 1)
+        throw std::invalid_argument("cannot take cdr from 1 elem list");
+    if (lst->elemList.size() == 2)
+        return lst->elemList[1]->eval();
+    ObjList res;
+    res.quoted = lst->quoted;
+    for (int i = 1; i < lst->elemList.size(); ++i) {
+        res.elemList.push_back(lst->elemList[i]->clone());
+    }
+    return res.clone();
+}
+
+void AST::Cdr::print() {
+    throw std::invalid_argument("Cannot print not quoted cdr statement");
 }
 
 
@@ -122,6 +190,9 @@ AST::ObjList *AST::ObjList::clone() {
 }
 
 AST::List *AST::ObjList::eval() {
+    BinOpr *binOperator = dynamic_cast<BinOpr *>(elemList[0]);
+    if (binOperator && elemList.size() == 1)
+        return binOperator->eval();
     if (quoted)
         return this->clone();
     if (elemList.empty())
@@ -140,9 +211,13 @@ AST::List *AST::ObjList::eval() {
 }
 
 void AST::ObjList::print() {
+    if (elemList.size() == 1) {
+        elemList[0]->eval()->print();
+        return;
+    }
     std::cout << "( ";
     for (auto &i: elemList) {
-        i->print();
+        i->eval()->print();
     }
     std::cout << ") ";
 }

@@ -148,6 +148,8 @@ private:
 
     int cur_symb = -1;
 
+    bool quoted = false;
+
     std::string m_IdentifierStr;
     int m_NumVal;
     double m_DouVal;
